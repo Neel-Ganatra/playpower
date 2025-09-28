@@ -4,56 +4,39 @@ class RedisService {
   constructor() {
     this.client = null;
     this.isConnected = false;
-    this.errorLogged = false;
+    this.disabled = false;
   }
 
   async connect() {
-    // Skip Redis if no URL is provided (allows running without Redis)
+    // Skip Redis completely if no URL is provided
     if (!process.env.REDIS_URL) {
       console.log("⚠️ No REDIS_URL provided. Running without Redis caching.");
+      this.disabled = true;
       return null;
     }
 
     try {
       this.client = Redis.createClient({
         url: process.env.REDIS_URL,
-        retry_strategy: (options) => {
-          if (options.error && options.error.code === "ECONNREFUSED") {
-            console.log(
-              "Redis connection refused. Running without Redis caching."
-            );
-            return new Error("Redis server connection refused");
-          }
-          if (options.total_retry_time > 1000 * 60 * 60) {
-            console.log("Redis retry time exhausted");
-            return new Error("Retry time exhausted");
-          }
-          if (options.attempt > 10) {
-            console.log("Redis max connection attempts reached");
-            return undefined;
-          }
-          // Reconnect after
-          return Math.min(options.attempt * 100, 3000);
-        },
       });
 
       this.client.on("error", (err) => {
-        // Only log error once, not spam the console
-        if (!this.errorLogged) {
-          console.error("Redis Client Error:", err.message);
-          this.errorLogged = true;
-        }
+        console.error("Redis Client Error:", err.message);
         this.isConnected = false;
+        // Disable Redis completely on persistent errors
+        this.disabled = true;
       });
 
       this.client.on("connect", () => {
         console.log("✅ Connected to Redis");
         this.isConnected = true;
+        this.disabled = false;
       });
 
       this.client.on("ready", () => {
         console.log("✅ Redis client ready");
         this.isConnected = true;
+        this.disabled = false;
       });
 
       this.client.on("end", () => {
@@ -66,6 +49,7 @@ class RedisService {
     } catch (error) {
       console.error("Failed to connect to Redis:", error.message);
       this.isConnected = false;
+      this.disabled = true;
       // Don't throw error - allow app to run without Redis
       return null;
     }
@@ -81,7 +65,7 @@ class RedisService {
 
   // Cache quiz data
   async cacheQuiz(quizId, quizData, expireInSeconds = 3600) {
-    if (!this.isConnected) return false;
+    if (this.disabled || !this.isConnected) return false;
 
     try {
       const key = `quiz:${quizId}`;
@@ -96,7 +80,7 @@ class RedisService {
 
   // Get cached quiz
   async getCachedQuiz(quizId) {
-    if (!this.isConnected) return null;
+    if (this.disabled || !this.isConnected) return null;
 
     try {
       const key = `quiz:${quizId}`;
@@ -115,7 +99,7 @@ class RedisService {
   // Cache user session data
   async cacheUserSession(userId, sessionData, expireInSeconds = 86400) {
     // 24 hours
-    if (!this.isConnected) return false;
+    if (this.disabled || !this.isConnected) return false;
 
     try {
       const key = `user:session:${userId}`;
@@ -133,7 +117,7 @@ class RedisService {
 
   // Get cached user session
   async getCachedUserSession(userId) {
-    if (!this.isConnected) return null;
+    if (this.disabled || !this.isConnected) return null;
 
     try {
       const key = `user:session:${userId}`;
@@ -148,7 +132,7 @@ class RedisService {
   // Cache AI-generated hints to avoid regenerating same hints
   async cacheHint(quizId, questionId, hint, expireInSeconds = 7200) {
     // 2 hours
-    if (!this.isConnected) return false;
+    if (this.disabled || !this.isConnected) return false;
 
     try {
       const key = `hint:${quizId}:${questionId}`;
@@ -162,7 +146,7 @@ class RedisService {
 
   // Get cached hint
   async getCachedHint(quizId, questionId) {
-    if (!this.isConnected) return null;
+    if (this.disabled || !this.isConnected) return null;
 
     try {
       const key = `hint:${quizId}:${questionId}`;
@@ -176,7 +160,8 @@ class RedisService {
 
   // Rate limiting for API calls
   async checkRateLimit(identifier, maxRequests = 100, windowInSeconds = 3600) {
-    if (!this.isConnected) return { allowed: true, remaining: maxRequests };
+    if (this.disabled || !this.isConnected)
+      return { allowed: true, remaining: maxRequests };
 
     try {
       const key = `ratelimit:${identifier}`;
@@ -204,7 +189,7 @@ class RedisService {
 
   // Generic cache methods
   async set(key, value, expireInSeconds = 3600) {
-    if (!this.isConnected) return false;
+    if (this.disabled || !this.isConnected) return false;
 
     try {
       await this.client.setEx(key, expireInSeconds, JSON.stringify(value));
@@ -216,7 +201,7 @@ class RedisService {
   }
 
   async get(key) {
-    if (!this.isConnected) return null;
+    if (this.disabled || !this.isConnected) return null;
 
     try {
       const cached = await this.client.get(key);
@@ -228,7 +213,7 @@ class RedisService {
   }
 
   async delete(key) {
-    if (!this.isConnected) return false;
+    if (this.disabled || !this.isConnected) return false;
 
     try {
       await this.client.del(key);
@@ -241,7 +226,7 @@ class RedisService {
 
   // Clear all cache (useful for testing)
   async flushAll() {
-    if (!this.isConnected) return false;
+    if (this.disabled || !this.isConnected) return false;
 
     try {
       await this.client.flushAll();
@@ -255,7 +240,7 @@ class RedisService {
 
   // Get Redis info
   async getInfo() {
-    if (!this.isConnected) return null;
+    if (this.disabled || !this.isConnected) return null;
 
     try {
       const info = await this.client.info();

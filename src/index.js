@@ -81,7 +81,7 @@ AI-powered quiz application with authentication, adaptive difficulty, and intell
     servers: [
       {
         url: process.env.API_URL || "http://localhost:4000",
-        description: "Development server",
+        description: "API Server",
       },
     ],
     components: {
@@ -108,8 +108,25 @@ AI-powered quiz application with authentication, adaptive difficulty, and intell
   apis: ["./src/routes/*.js", "./src/controllers/*.js"],
 };
 
-const swaggerSpec = swaggerJsdoc(swaggerOptions);
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+// Dynamic Swagger setup that adapts to current host
+app.use("/api-docs", swaggerUi.serve, (req, res, next) => {
+  // Update server URL dynamically based on current request
+  const dynamicSwaggerOptions = {
+    ...swaggerOptions,
+    definition: {
+      ...swaggerOptions.definition,
+      servers: [
+        {
+          url: `${req.protocol}://${req.get("host")}`,
+          description: "Current API Server",
+        },
+      ],
+    },
+  };
+
+  const swaggerSpec = swaggerJsdoc(dynamicSwaggerOptions);
+  swaggerUi.setup(swaggerSpec)(req, res, next);
+});
 
 // Root route - API information
 app.get("/", (req, res) => {
@@ -159,13 +176,17 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 4000;
 
-// Initialize Redis connection
+// Initialize services and start server
 async function startServer() {
   if (process.env.NODE_ENV !== "test") {
-    // Connect to Redis (non-blocking)
-    await redisService.connect().catch((err) => {
-      console.log("⚠️ Redis not available, continuing without cache");
-    });
+    // Only try to connect to Redis if REDIS_URL is provided
+    if (process.env.REDIS_URL) {
+      await redisService.connect().catch((err) => {
+        console.log("⚠️ Redis connection failed, continuing without cache");
+      });
+    } else {
+      console.log("⚠️ No REDIS_URL provided. Running without Redis caching.");
+    }
 
     app.listen(PORT, () => {
       console.log(`🚀 AI Quizzer API running on port ${PORT}`);
@@ -181,7 +202,9 @@ async function startServer() {
     // Graceful shutdown
     process.on("SIGINT", async () => {
       console.log("\n🛑 Shutting down server...");
-      await redisService.disconnect();
+      if (process.env.REDIS_URL) {
+        await redisService.disconnect();
+      }
       process.exit(0);
     });
   }
