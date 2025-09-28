@@ -7,13 +7,19 @@ class RedisService {
   }
 
   async connect() {
+    // Skip Redis if no URL is provided (allows running without Redis)
+    if (!process.env.REDIS_URL) {
+      console.log("⚠️ No REDIS_URL provided. Running without Redis caching.");
+      return null;
+    }
+
     try {
       this.client = Redis.createClient({
-        url: process.env.REDIS_URL || "redis://localhost:6379",
+        url: process.env.REDIS_URL,
         retry_strategy: (options) => {
           if (options.error && options.error.code === "ECONNREFUSED") {
             console.log(
-              "Redis connection refused. Make sure Redis server is running."
+              "Redis connection refused. Running without Redis caching."
             );
             return new Error("Redis server connection refused");
           }
