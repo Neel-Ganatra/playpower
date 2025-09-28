@@ -1,0 +1,41 @@
+{
+  "name": "ai-quizzer-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:reset": "prisma migrate reset",
+    "db:studio": "prisma studio",
+    "db:inspect": "node inspect-db.js",
+    "test:api": "node test-api.js",
+    "docker:build": "docker build -t ai-quizzer-backend .",
+    "docker:run": "docker run -p 4000:4000 ai-quizzer-backend",
+    "docker:compose": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "test": "node test-api.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "jsonwebtoken": "^9.0.2",
+    "@prisma/client": "^5.4.2",
+    "groq-sdk": "^0.3.3",
+    "nodemailer": "^6.9.7",
+    "redis": "^4.6.10",
+    "swagger-ui-express": "^5.0.0",
+    "swagger-jsdoc": "^6.2.8",
+    "helmet": "^7.1.0",
+    "express-rate-limit": "^7.1.5",
+    "joi": "^17.11.0"
+  },
+  "devDependencies": {
+    "prisma": "^5.4.2",
+    "nodemon": "^3.0.2"
+  }
+}

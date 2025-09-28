@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Quizzer API Test Frontend</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        overflow: hidden;
+      }
+
+      .header {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+      }
+
+      .header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+      }
+
+      .header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .content {
+        padding: 30px;
+      }
+
+      .auth-section {
+        background: #f8fafc;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 30px;
+        border: 1px solid #e2e8f0;
+      }
+
+      .auth-status {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+
+      .status-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #ef4444;
+      }
+
+      .status-indicator.authenticated {
+        background: #10b981;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin-bottom: 15px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #374151;
+      }
+
+      input,
+      select,
+      textarea {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #e5e7eb;
+        border-radius: 6px;
+        font-size: 14px;
+        transition: border-color 0.3s;
+      }
+
+      input:focus,
+      select:focus,
+      textarea:focus {
+        outline: none;
+        border-color: #4f46e5;
+      }
+
+      button {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.3s;
+        margin-right: 10px;
+        margin-bottom: 10px;
+      }
+
+      button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+      }
+
+      button:disabled {
+        background: #9ca3af;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+
+      .api-section {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        overflow: hidden;
+      }
+
+      .api-header {
+        background: #f9fafb;
+        padding: 15px 20px;
+        border-bottom: 1px solid #e5e7eb;
+        font-weight: 600;
+        color: #374151;
+        cursor: pointer;
+        user-select: none;
+        display: flex;
+        justify-content: between;
+        align-items: center;
+      }
+
+      .api-header:hover {
+        background: #f3f4f6;
+      }
+
+      .api-content {
+        padding: 20px;
+        display: none;
+      }
+
+      .api-content.active {
+        display: block;
+      }
+
+      .response-area {
+        background: #1f2937;
+        color: #f9fafb;
+        padding: 15px;
+        border-radius: 6px;
+        font-family: "Courier New", monospace;
+        font-size: 12px;
+        min-height: 100px;
+        white-space: pre-wrap;
+        overflow-x: auto;
+        margin-top: 15px;
+        border: 1px solid #374151;
+      }
+
+      .success {
+        border-left: 4px solid #10b981;
+        background: #f0fdf4;
+      }
+
+      .error {
+        border-left: 4px solid #ef4444;
+        background: #fef2f2;
+      }
+
+      .loading {
+        opacity: 0.6;
+      }
+
+      .endpoint-info {
+        background: #eff6ff;
+        padding: 10px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+        font-size: 13px;
+        color: #1e40af;
+      }
+
+      .toggle-icon {
+        font-size: 12px;
+        margin-left: auto;
+      }
+
+      .quiz-results {
+        background: #f0f9ff;
+        padding: 15px;
+        border-radius: 6px;
+        margin-top: 10px;
+        border: 1px solid #0ea5e9;
+      }
+
+      .api-url {
+        font-family: "Courier New", monospace;
+        background: #374151;
+        color: #f9fafb;
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-size: 12px;
+        margin: 10px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>🧠 AI Quizzer API Tester</h1>
+        <p>Test all API endpoints with this interactive frontend</p>
+      </div>
+
+      <div class="content">
+        <!-- Authentication Section -->
+        <div class="auth-section">
+          <h3>🔐 Authentication</h3>
+          <div class="auth-status">
+            <span class="status-indicator" id="authIndicator"></span>
+            <span id="authStatus">Not authenticated</span>
+          </div>
+
+          <div class="form-row">
+            <div>
+              <label for="username">Username:</label>
+              <input
+                type="text"
+                id="username"
+                placeholder="Enter any username"
+                value="test_user"
+              />
+            </div>
+            <div>
+              <label for="password">Password:</label>
+              <input
+                type="password"
+                id="password"
+                placeholder="Enter any password"
+                value="password123"
+              />
+            </div>
+          </div>
+
+          <button onclick="login()" id="loginBtn">Login</button>
+          <button onclick="logout()" id="logoutBtn" disabled>Logout</button>
+
+          <div class="api-url">POST /login</div>
+          <div class="response-area" id="authResponse">
+            Click login to authenticate...
+          </div>
+        </div>
+
+        <!-- API Testing Sections -->
+
+        <!-- Create Quiz -->
+        <div class="api-section">
+          <div class="api-header" onclick="toggleSection('createQuiz')">
+            📝 Create Quiz
+            <span class="toggle-icon">▼</span>
+          </div>
+          <div class="api-content" id="createQuizContent">
+            <div class="endpoint-info">
+              Creates a new AI-generated quiz based on grade and subject
+            </div>
+
+            <div class="form-row">
+              <div>
+                <label for="grade">Grade:</label>
+                <select id="grade">
+                  <option value="1">Grade 1</option>
+                  <option value="2">Grade 2</option>
+                  <option value="3">Grade 3</option>
+                  <option value="4">Grade 4</option>
+                  <option value="5" selected>Grade 5</option>
+                  <option value="6">Grade 6</option>
+                  <option value="7">Grade 7</option>
+                  <option value="8">Grade 8</option>
+                  <option value="9">Grade 9</option>
+                  <option value="10">Grade 10</option>
+                </select>
+              </div>
+              <div>
+                <label for="subject">Subject:</label>
+                <select id="subject">
+                  <option value="Mathematics">Mathematics</option>
+                  <option value="English">English</option>
+                  <option value="Science">Science</option>
+                  <option value="History">History</option>
+                  <option value="Geography">Geography</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label for="questionCount">Number of Questions:</label>
+              <input
+                type="number"
+                id="questionCount"
+                value="5"
+                min="1"
+                max="20"
+              />
+            </div>
+
+            <button onclick="createQuiz()" id="createQuizBtn" disabled>
+              Create Quiz
+            </button>
+
+            <div class="api-url">POST /quiz/create</div>
+            <div class="response-area" id="createQuizResponse">
+              Login first to create a quiz...
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit Quiz -->
+        <div class="api-section">
+          <div class="api-header" onclick="toggleSection('submitQuiz')">
+            ✅ Submit Quiz
+            <span class="toggle-icon">▼</span>
+          </div>
+          <div class="api-content" id="submitQuizContent">
+            <div class="endpoint-info">
+              Submit answers for a quiz (create a quiz first to get a quiz ID)
+            </div>
+
+            <div class="form-row">
+              <div>
+                <label for="quizId">Quiz ID:</label>
+                <input
+                  type="number"
+                  id="quizId"
+                  placeholder="Quiz ID from created quiz"
+                />
+              </div>
+              <div>
+                <label for="answers">Answers (comma-separated indices):</label>
+                <input
+                  type="text"
+                  id="answers"
+                  placeholder="e.g., 0,2,1,3,0"
+                  value="0,1,2,0,1"
+                />
+              </div>
+            </div>
+
+            <button onclick="submitQuiz()" id="submitQuizBtn" disabled>
+              Submit Quiz
+            </button>
+
+            <div class="api-url">POST /quiz/{id}/submit</div>
+            <div class="response-area" id="submitQuizResponse">
+              Login and create a quiz first...
+            </div>
+          </div>
+        </div>
+
+        <!-- Get Quiz History -->
+        <div class="api-section">
+          <div class="api-header" onclick="toggleSection('quizHistory')">
+            📚 Quiz History
+            <span class="toggle-icon">▼</span>
+          </div>
+          <div class="api-content" id="quizHistoryContent">
+            <div class="endpoint-info">
+              Get your quiz history with optional filters
+            </div>
+
+            <div class="form-row">
+              <div>
+                <label for="historyGrade">Filter by Grade (optional):</label>
+                <select id="historyGrade">
+                  <option value="">All Grades</option>
+                  <option value="1">Grade 1</option>
+                  <option value="2">Grade 2</option>
+                  <option value="3">Grade 3</option>
+                  <option value="4">Grade 4</option>
+                  <option value="5">Grade 5</option>
+                  <option value="6">Grade 6</option>
+                  <option value="7">Grade 7</option>
+                  <option value="8">Grade 8</option>
+                  <option value="9">Grade 9</option>
+                  <option value="10">Grade 10</option>
+                </select>
+              </div>
+              <div>
+                <label for="historySubject"
+                  >Filter by Subject (optional):</label
+                >
+                <select id="historySubject">
+                  <option value="">All Subjects</option>
+                  <option value="Mathematics">Mathematics</option>
+                  <option value="English">English</option>
+                  <option value="Science">Science</option>
+                  <option value="History">History</option>
+                  <option value="Geography">Geography</option>
+                </select>
+              </div>
+            </div>
+
+            <button onclick="getQuizHistory()" id="quizHistoryBtn" disabled>
+              Get History
+            </button>
+
+            <div class="api-url">GET /quiz/history</div>
+            <div class="response-area" id="quizHistoryResponse">
+              Login first to view history...
+            </div>
+          </div>
+        </div>
+
+        <!-- Quiz Analytics -->
+        <div class="api-section">
+          <div class="api-header" onclick="toggleSection('analytics')">
+            📊 Analytics
+            <span class="toggle-icon">▼</span>
+          </div>
+          <div class="api-content" id="analyticsContent">
+            <div class="endpoint-info">
+              Get your quiz performance analytics and insights
+            </div>
+
+            <div>
+              <label for="analyticsSubject"
+                >Filter by Subject (optional):</label
+              >
+              <select id="analyticsSubject">
+                <option value="">All Subjects</option>
+                <option value="Mathematics">Mathematics</option>
+                <option value="English">English</option>
+                <option value="Science">Science</option>
+                <option value="History">History</option>
+                <option value="Geography">Geography</option>
+              </select>
+            </div>
+
+            <button onclick="getAnalytics()" id="analyticsBtn" disabled>
+              Get Analytics
+            </button>
+
+            <div class="api-url">GET /quiz/analytics</div>
+            <div class="response-area" id="analyticsResponse">
+              Login first to view analytics...
+            </div>
+          </div>
+        </div>
+
+        <!-- Retry Quiz -->
+        <div class="api-section">
+          <div class="api-header" onclick="toggleSection('retryQuiz')">
+            🔄 Retry Quiz
+            <span class="toggle-icon">▼</span>
+          </div>
+          <div class="api-content" id="retryQuizContent">
+            <div class="endpoint-info">
+              Retry a quiz (allows re-taking a previously created quiz)
+            </div>
+
+            <div>
+              <label for="retryQuizId">Quiz ID to Retry:</label>
+              <input
+                type="number"
+                id="retryQuizId"
+                placeholder="Enter quiz ID"
+              />
+            </div>
+
+            <button onclick="retryQuiz()" id="retryQuizBtn" disabled>
+              Retry Quiz
+            </button>
+
+            <div class="api-url">POST /quiz/{id}/retry</div>
+            <div class="response-area" id="retryQuizResponse">
+              Login first to retry a quiz...
+            </div>
+          </div>
+        </div>
+
+        <!-- Get Question Hint -->
+        <div class="api-section">
+          <div class="api-header" onclick="toggleSection('questionHint')">
+            💡 Question Hint
+            <span class="toggle-icon">▼</span>
+          </div>
+          <div class="api-content" id="questionHintContent">
+            <div class="endpoint-info">
+              Get AI-generated hints for specific questions
+            </div>
+
+            <div class="form-row">
+              <div>
+                <label for="hintQuizId">Quiz ID:</label>
+                <input type="number" id="hintQuizId" placeholder="Quiz ID" />
+              </div>
+              <div>
+                <label for="hintQuestionId">Question ID:</label>
+                <input
+                  type="number"
+                  id="hintQuestionId"
+                  placeholder="Question ID (1-based)"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label for="userAnswer">Your Answer Attempt (optional):</label>
+              <input
+                type="number"
+                id="userAnswer"
+                placeholder="Answer index (0-based)"
+              />
+            </div>
+
+            <button onclick="getQuestionHint()" id="questionHintBtn" disabled>
+              Get Hint
+            </button>
+
+            <div class="api-url">
+              POST /quiz/{quizId}/question/{questionId}/hint
+            </div>
+            <div class="response-area" id="questionHintResponse">
+              Login first to get hints...
+            </div>
+          </div>
+        </div>
+
+        <!-- Leaderboard -->
+        <div class="api-section">
+          <div class="api-header" onclick="toggleSection('leaderboard')">
+            🏆 Leaderboard
+            <span class="toggle-icon">▼</span>
+          </div>
+          <div class="api-content" id="leaderboardContent">
+            <div class="endpoint-info">
+              View leaderboard for specific grade and subject
+            </div>
+
+            <div class="form-row">
+              <div>
+                <label for="leaderGrade">Grade:</label>
+                <select id="leaderGrade">
+                  <option value="5">Grade 5</option>
+                  <option value="1">Grade 1</option>
+                  <option value="2">Grade 2</option>
+                  <option value="3">Grade 3</option>
+                  <option value="4">Grade 4</option>
+                  <option value="6">Grade 6</option>
+                  <option value="7">Grade 7</option>
+                  <option value="8">Grade 8</option>
+                  <option value="9">Grade 9</option>
+                  <option value="10">Grade 10</option>
+                </select>
+              </div>
+              <div>
+                <label for="leaderSubject">Subject:</label>
+                <select id="leaderSubject">
+                  <option value="Mathematics">Mathematics</option>
+                  <option value="English">English</option>
+                  <option value="Science">Science</option>
+                  <option value="History">History</option>
+                  <option value="Geography">Geography</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label for="leaderLimit">Limit:</label>
+              <input
+                type="number"
+                id="leaderLimit"
+                value="10"
+                min="1"
+                max="50"
+              />
+            </div>
+
+            <button onclick="getLeaderboard()" id="leaderboardBtn" disabled>
+              Get Leaderboard
+            </button>
+
+            <div class="api-url">GET /quiz/leaderboard</div>
+            <div class="response-area" id="leaderboardResponse">
+              Login first to view leaderboard...
+            </div>
+          </div>
+        </div>
+
+        <!-- Send Email -->
+        <div class="api-section">
+          <div class="api-header" onclick="toggleSection('sendEmail')">
+            📧 Send Results Email
+            <span class="toggle-icon">▼</span>
+          </div>
+          <div class="api-content" id="sendEmailContent">
+            <div class="endpoint-info">
+              Send quiz results to an email address
+            </div>
+
+            <div class="form-row">
+              <div>
+                <label for="submissionId">Submission ID:</label>
+                <input
+                  type="number"
+                  id="submissionId"
+                  placeholder="Submission ID from quiz submission"
+                />
+              </div>
+              <div>
+                <label for="email">Email Address:</label>
+                <input
+                  type="email"
+                  id="email"
+                  placeholder="recipient@example.com"
+                />
+              </div>
+            </div>
+
+            <button onclick="sendEmail()" id="sendEmailBtn" disabled>
+              Send Email
+            </button>
+
+            <div
+              class="endpoint-info"
+              style="
+                margin-top: 15px;
+                background: #f0f9ff;
+                border: 1px solid #0ea5e9;
+              "
+            >
+              <strong
+                >📧 EmailJS Setup (Optional - Better than Server Email):</strong
+              ><br />
+              1. Go to
+              <a
+                href="https://emailjs.com"
+                target="_blank"
+                style="color: #0ea5e9"
+                >emailjs.com</a
+              >
+              and create free account<br />
+              2. Add email service (Gmail/Outlook) - no passwords needed!<br />
+              3. Create email template with variables: {{to_email}},
+              {{quiz_subject}}, {{score}}<br />
+              4. Get your Public Key, Service ID, Template ID<br />
+              5. Update EMAILJS_CONFIG in this page's JavaScript<br />
+              <strong>Status:</strong>
+              <span id="emailJsStatus" style="color: #dc2626"
+                >Not Configured (using API fallback)</span
+              >
+            </div>
+
+            <div class="api-url">POST /quiz/send-email (or EmailJS)</div>
+            <div class="response-area" id="sendEmailResponse">
+              Login first and submit a quiz...
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EmailJS SDK -->
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"
+    ></script>
+
+    <script>
+      const API_BASE = "http://localhost:4000";
+      let authToken = localStorage.getItem("authToken");
+      let currentQuizId = null;
+      let currentSubmissionId = null;
+
+      // EmailJS Configuration
+      const EMAILJS_CONFIG = {
+        publicKey: "YUhMBRcYYKCnWyKSx",
+        serviceId: "service_kn3r914",
+        templateId: "template_6ffahvl",
+      };
+
+      // Initialize EmailJS
+      (function () {
+        const statusEl = document.getElementById("emailJsStatus");
+        if (EMAILJS_CONFIG.publicKey !== "YOUR_PUBLIC_KEY") {
+          emailjs.init(EMAILJS_CONFIG.publicKey);
+          console.log("📧 EmailJS initialized");
+          if (statusEl) {
+            statusEl.textContent = "Configured ✓ (using EmailJS)";
+            statusEl.style.color = "#10b981";
+          }
+        } else {
+          console.log("⚠️ EmailJS not configured - using fallback API method");
+          if (statusEl) {
+            statusEl.textContent = "Not Configured (using API fallback)";
+            statusEl.style.color = "#dc2626";
+          }
+        }
+      })();
+
+      // Initialize UI based on stored auth token
+      if (authToken) {
+        updateAuthStatus(true);
+      }
+
+      function updateAuthStatus(isAuthenticated) {
+        const indicator = document.getElementById("authIndicator");
+        const status = document.getElementById("authStatus");
+        const loginBtn = document.getElementById("loginBtn");
+        const logoutBtn = document.getElementById("logoutBtn");
+
+        if (isAuthenticated) {
+          indicator.classList.add("authenticated");
+          status.textContent = "Authenticated ✓";
+          loginBtn.disabled = true;
+          logoutBtn.disabled = false;
+          enableApiButtons();
+        } else {
+          indicator.classList.remove("authenticated");
+          status.textContent = "Not authenticated";
+          loginBtn.disabled = false;
+          logoutBtn.disabled = true;
+          disableApiButtons();
+        }
+      }
+
+      function enableApiButtons() {
+        const buttons = [
+          "createQuizBtn",
+          "submitQuizBtn",
+          "quizHistoryBtn",
+          "analyticsBtn",
+          "retryQuizBtn",
+          "questionHintBtn",
+          "leaderboardBtn",
+          "sendEmailBtn",
+        ];
+        buttons.forEach((btnId) => {
+          document.getElementById(btnId).disabled = false;
+        });
+      }
+
+      function disableApiButtons() {
+        const buttons = [
+          "createQuizBtn",
+          "submitQuizBtn",
+          "quizHistoryBtn",
+          "analyticsBtn",
+          "retryQuizBtn",
+          "questionHintBtn",
+          "leaderboardBtn",
+          "sendEmailBtn",
+        ];
+        buttons.forEach((btnId) => {
+          document.getElementById(btnId).disabled = true;
+        });
+      }
+
+      function toggleSection(sectionId) {
+        const content = document.getElementById(sectionId + "Content");
+        const isActive = content.classList.contains("active");
+
+        // Close all sections
+        document.querySelectorAll(".api-content").forEach((el) => {
+          el.classList.remove("active");
+        });
+
+        // Open clicked section if it wasn't active
+        if (!isActive) {
+          content.classList.add("active");
+        }
+      }
+
+      async function makeRequest(
+        endpoint,
+        method = "GET",
+        body = null,
+        useAuth = true
+      ) {
+        const headers = {
+          "Content-Type": "application/json",
+        };
+
+        if (useAuth && authToken) {
+          headers["Authorization"] = `Bearer ${authToken}`;
+        }
+
+        const config = {
+          method,
+          headers,
+        };
+
+        if (body) {
+          config.body = JSON.stringify(body);
+        }
+
+        try {
+          const response = await fetch(`${API_BASE}${endpoint}`, config);
+          const data = await response.json();
+
+          return {
+            success: response.ok,
+            status: response.status,
+            data: data,
+          };
+        } catch (error) {
+          return {
+            success: false,
+            error: error.message,
+          };
+        }
+      }
+
+      function displayResponse(elementId, response) {
+        const element = document.getElementById(elementId);
+        const jsonString = JSON.stringify(response, null, 2);
+
+        element.textContent = jsonString;
+        element.className =
+          "response-area " + (response.success ? "success" : "error");
+      }
+
+      async function login() {
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+
+        const response = await makeRequest(
+          "/login",
+          "POST",
+          {
+            username,
+            password,
+          },
+          false
+        );
+
+        if (response.success) {
+          authToken = response.data.token;
+          localStorage.setItem("authToken", authToken);
+          updateAuthStatus(true);
+        }
+
+        displayResponse("authResponse", response);
+      }
+
+      function logout() {
+        authToken = null;
+        localStorage.removeItem("authToken");
+        updateAuthStatus(false);
+
+        document.getElementById("authResponse").textContent =
+          "Logged out successfully";
+        document.getElementById("authResponse").className = "response-area";
+      }
+
+      async function createQuiz() {
+        const grade = document.getElementById("grade").value;
+        const subject = document.getElementById("subject").value;
+        const questionCount = parseInt(
+          document.getElementById("questionCount").value
+        );
+
+        const response = await makeRequest("/quiz/create", "POST", {
+          grade,
+          subject,
+          questionCount,
+        });
+
+        if (response.success) {
+          currentQuizId = response.data.id;
+          // Auto-fill quiz ID in submit form
+          document.getElementById("quizId").value = currentQuizId;
+          document.getElementById("retryQuizId").value = currentQuizId;
+          document.getElementById("hintQuizId").value = currentQuizId;
+        }
+
+        displayResponse("createQuizResponse", response);
+      }
+
+      async function submitQuiz() {
+        const quizId = parseInt(document.getElementById("quizId").value);
+        const answersStr = document.getElementById("answers").value;
+        const answers = answersStr.split(",").map((a) => parseInt(a.trim()));
+
+        const response = await makeRequest(`/quiz/${quizId}/submit`, "POST", {
+          answers,
+        });
+
+        if (response.success) {
+          currentSubmissionId = response.data.id;
+          // Auto-fill submission ID in email form
+          document.getElementById("submissionId").value = currentSubmissionId;
+        }
+
+        displayResponse("submitQuizResponse", response);
+      }
+
+      async function getQuizHistory() {
+        const grade = document.getElementById("historyGrade").value;
+        const subject = document.getElementById("historySubject").value;
+
+        let queryParams = "";
+        const params = [];
+        if (grade) params.push(`grade=${grade}`);
+        if (subject) params.push(`subject=${encodeURIComponent(subject)}`);
+        if (params.length > 0) {
+          queryParams = "?" + params.join("&");
+        }
+
+        const response = await makeRequest(`/quiz/history${queryParams}`);
+        displayResponse("quizHistoryResponse", response);
+      }
+
+      async function getAnalytics() {
+        const subject = document.getElementById("analyticsSubject").value;
+        let queryParams = subject
+          ? `?subject=${encodeURIComponent(subject)}`
+          : "";
+
+        const response = await makeRequest(`/quiz/analytics${queryParams}`);
+        displayResponse("analyticsResponse", response);
+      }
+
+      async function retryQuiz() {
+        const quizId = parseInt(document.getElementById("retryQuizId").value);
+
+        const response = await makeRequest(`/quiz/${quizId}/retry`, "POST");
+        displayResponse("retryQuizResponse", response);
+      }
+
+      async function getQuestionHint() {
+        const quizId = parseInt(document.getElementById("hintQuizId").value);
+        const questionId = parseInt(
+          document.getElementById("hintQuestionId").value
+        );
+        const userAnswer = document.getElementById("userAnswer").value;
+
+        const body = {};
+        if (userAnswer) {
+          body.userAnswer = parseInt(userAnswer);
+        }
+
+        const response = await makeRequest(
+          `/quiz/${quizId}/question/${questionId}/hint`,
+          "POST",
+          body
+        );
+        displayResponse("questionHintResponse", response);
+      }
+
+      async function getLeaderboard() {
+        const grade = document.getElementById("leaderGrade").value;
+        const subject = document.getElementById("leaderSubject").value;
+        const limit = parseInt(document.getElementById("leaderLimit").value);
+
+        const queryParams = `?grade=${grade}&subject=${encodeURIComponent(
+          subject
+        )}&limit=${limit}`;
+
+        const response = await makeRequest(`/quiz/leaderboard${queryParams}`);
+        displayResponse("leaderboardResponse", response);
+      }
+
+      async function sendEmail() {
+        const submissionId = parseInt(
+          document.getElementById("submissionId").value
+        );
+        const email = document.getElementById("email").value;
+
+        // Try EmailJS first if configured
+        if (EMAILJS_CONFIG.publicKey !== "YOUR_PUBLIC_KEY" && window.emailjs) {
+          try {
+            await sendEmailWithEmailJS(submissionId, email);
+            return;
+          } catch (error) {
+            console.log("EmailJS failed, falling back to API:", error);
+          }
+        }
+
+        // Fallback to API method
+        const response = await makeRequest("/quiz/send-email", "POST", {
+          submissionId,
+          email,
+        });
+
+        displayResponse("sendEmailResponse", response);
+      }
+
+      async function sendEmailWithEmailJS(submissionId, email) {
+        // First get the submission data from API
+        const submissionResponse = await makeRequest(
+          `/quiz/submission/${submissionId}`
+        );
+
+        if (!submissionResponse.success) {
+          throw new Error("Failed to get submission data");
+        }
+
+        const submission = submissionResponse.data;
+
+        const templateParams = {
+          to_email: email,
+          to_name: "Quiz Taker",
+          subject: `Quiz Results - ${
+            submission.quiz?.subject || "Quiz"
+          } (Score: ${submission.score}%)`,
+          quiz_subject: submission.quiz?.subject || "Unknown",
+          quiz_grade: submission.quiz?.grade || "Unknown",
+          score: submission.score || 0,
+          total_questions: submission.answers?.length || 0,
+          correct_answers: Math.round(
+            (submission.score / 100) * (submission.answers?.length || 0)
+          ),
+          date: new Date().toLocaleDateString(),
+          message: `Congratulations! You scored ${submission.score}% on your ${submission.quiz?.subject} quiz.`,
+        };
+
+        await emailjs.send(
+          EMAILJS_CONFIG.serviceId,
+          EMAILJS_CONFIG.templateId,
+          templateParams
+        );
+
+        displayResponse("sendEmailResponse", {
+          success: true,
+          data: {
+            message: "Email sent successfully via EmailJS! 📧",
+            email: email,
+            submissionId: submissionId,
+            score: submission.score,
+            method: "EmailJS",
+          },
+        });
+      }
+
+      // Auto-expand first section on load
+      document.addEventListener("DOMContentLoaded", function () {
+        if (!authToken) {
+          // If not authenticated, show instructions
+          document.getElementById("authResponse").textContent =
+            "Enter any username and password to get started!";
+        }
+      });
+    </script>
+  </body>
+</html>
