@@ -152,8 +152,13 @@ app.use("/api-docs", swaggerUi.serve, (req, res, next) => {
   swaggerUi.setup(swaggerSpec)(req, res, next);
 });
 
-// Root route - API information
+// Root route - redirect directly to Swagger docs
 app.get("/", (req, res) => {
+  res.redirect("/api-docs");
+});
+
+// API information route (for those who want JSON)
+app.get("/info", (req, res) => {
   res.json({
     message: "Welcome to AI Quizzer API",
     version: "1.0.0",
