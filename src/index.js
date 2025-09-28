@@ -15,6 +15,9 @@ dotenv.config();
 
 const app = express();
 
+// Trust proxy (important for Render deployment)
+app.set("trust proxy", true);
+
 // Security middleware
 app.use(helmet());
 
@@ -110,6 +113,27 @@ AI-powered quiz application with authentication, adaptive difficulty, and intell
 
 // Dynamic Swagger setup that adapts to current host
 app.use("/api-docs", swaggerUi.serve, (req, res, next) => {
+  // Determine the correct protocol - force HTTPS for Render deployment
+  let protocol = req.protocol;
+  const host = req.get("host");
+
+  // Force HTTPS for Render deployment
+  if (host && host.includes("render.com")) {
+    protocol = "https";
+  }
+
+  // Also check for forwarded protocol (common in cloud deployments)
+  const forwardedProto = req.get("x-forwarded-proto");
+  if (forwardedProto) {
+    protocol = forwardedProto;
+  }
+
+  const serverUrl = `${protocol}://${host}`;
+
+  console.log(
+    `[Swagger] Host: ${host}, Protocol: ${protocol}, Server URL: ${serverUrl}`
+  );
+
   // Update server URL dynamically based on current request
   const dynamicSwaggerOptions = {
     ...swaggerOptions,
@@ -117,7 +141,7 @@ app.use("/api-docs", swaggerUi.serve, (req, res, next) => {
       ...swaggerOptions.definition,
       servers: [
         {
-          url: `${req.protocol}://${req.get("host")}`,
+          url: serverUrl,
           description: "Current API Server",
         },
       ],
