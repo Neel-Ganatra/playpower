@@ -4,6 +4,7 @@ class RedisService {
   constructor() {
     this.client = null;
     this.isConnected = false;
+    this.errorLogged = false;
   }
 
   async connect() {
@@ -37,7 +38,11 @@ class RedisService {
       });
 
       this.client.on("error", (err) => {
-        console.error("Redis Client Error:", err);
+        // Only log error once, not spam the console
+        if (!this.errorLogged) {
+          console.error("Redis Client Error:", err.message);
+          this.errorLogged = true;
+        }
         this.isConnected = false;
       });
 
